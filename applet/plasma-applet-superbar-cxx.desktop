@@ -1,0 +1,22 @@
+[Desktop Entry]
+#Encoding of this file
+Encoding=UTF-8
+#The name to be shown in the 'Add Widgets' dialog
+Name=Superbar
+Comment=Unified Application Launcher and Taskbar (C++ version)
+Type=Service
+ServiceTypes=Plasma/Applet
+#The icon to show in the 'Add Widgets' dialog
+#Icon=plasma
+X-KDE-Library=plasma_applet_superbar-cxx
+X-KDE-PluginInfo-Author=Jin Liu
+X-KDE-PluginInfo-Email=m.liu.jin@gmail.com
+#The internal name of the plasmoid. Your plasmoid gets installed into ~/.kde/share/apps/plasma/<Name>/
+X-KDE-PluginInfo-Name=superbar-cxx
+X-KDE-PluginInfo-Version=0.1
+X-KDE-PluginInfo-Website=http://plasma.kde.org/
+X-KDE-PluginInfo-Category=Windows and Tasks
+X-KDE-PluginInfo-Depends=
+X-KDE-PluginInfo-License=GPL
+#Tells KDE if this plasmoid should be available by default, or if the user needs to jump through hoops to enable it.
+X-KDE-PluginInfo-EnabledByDefault=true
