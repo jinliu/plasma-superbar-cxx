@@ -1,12 +1,17 @@
 #include "launcher_button.h"
 
 #include <Plasma/Applet>
-
+#include <Plasma/IconWidget>
 #include <KConfig>
 #include <KDesktopFile>
 #include <KUrl>
+#include <taskmanager/abstractgroupableitem.h>
+#include <taskmanager/groupmanager.h>
+#include <taskmanager/taskactions.h>
 
 #include <QGraphicsLinearLayout>
+
+using TaskManager::AbstractGroupableItem;
 
 class Superbar : public Plasma::Applet
 {
@@ -15,8 +20,14 @@ public:
     Superbar(QObject *parent, const QVariantList &args);
     void init();
 
+private slots:
+    void taskGroupAdded(AbstractGroupableItem*);
+    void taskGroupRemoved(AbstractGroupableItem*);
+    void taskGroupPositionChanged(AbstractGroupableItem*);
+    
 private:
     QGraphicsLinearLayout* m_layout;
+    TaskManager::GroupManager* m_groupManager;
 };
 
 K_EXPORT_PLASMA_APPLET(superbar-cxx, Superbar)
@@ -24,8 +35,12 @@ K_EXPORT_PLASMA_APPLET(superbar-cxx, Superbar)
 
 Superbar::Superbar(QObject *parent, const QVariantList &args)
     : Plasma::Applet(parent, args),
-      m_layout(new QGraphicsLinearLayout(this))
-{}
+    m_layout(new QGraphicsLinearLayout(this)),
+    m_groupManager(new TaskManager::GroupManager(this))
+{
+    m_groupManager->setGroupingStrategy(TaskManager::GroupManager::ProgramGrouping);
+    m_groupManager->setSortingStrategy(TaskManager::GroupManager::AlphaSorting);
+}
 
 
 void Superbar::init()
@@ -33,10 +48,11 @@ void Superbar::init()
     setHasConfigurationInterface(false);
     setAspectRatioMode(Plasma::IgnoreAspectRatio);
 
+    // Create launchers from Kickoff favorites
     KConfig kickoffConf("kickoffrc", KConfig::NoGlobals);
     KConfigGroup favoritesGroup(&kickoffConf, "Favorites");
     QStringList favorites = favoritesGroup.readEntry("FavoriteURLs", QStringList());
-    
+
     for (int i = 0; i < favorites.size(); ++i) {
         KUrl url(favorites[i]);
         if (url.isValid() && url.isLocalFile() && KDesktopFile::isDesktopFile(url.toLocalFile())) {
@@ -46,6 +62,36 @@ void Superbar::init()
     }
     
     setLayout(m_layout);
+    
+    // Setup TaskManager
+    connect(
+        m_groupManager->rootGroup(), SIGNAL(itemAdded(AbstractGroupableItem*)),
+        this, SLOT(taskGroupAdded(AbstractGroupableItem*)));
+    connect(
+        m_groupManager->rootGroup(), SIGNAL(itemRemoved(AbstractGroupableItem*)),
+        this, SLOT(taskGroupRemoved(AbstractGroupableItem*)));
+    connect(
+        m_groupManager->rootGroup(), SIGNAL(itemPositionChanged(AbstractGroupableItem*)),
+        this, SLOT(taskGroupPositionChanged(AbstractGroupableItem*)));
+    m_groupManager->reconnect();
+    foreach (AbstractGroupableItem* item, m_groupManager->rootGroup()->members())
+        taskGroupAdded(item);
 }
+
+
+void Superbar::taskGroupAdded(AbstractGroupableItem* abstractItem)
+{
+    Plasma::IconWidget* button = new Plasma::IconWidget(this);
+    button->setIcon(abstractItem->icon());
+    m_layout->addItem(button);
+}
+
+
+void Superbar::taskGroupRemoved(AbstractGroupableItem*)
+{}
+
+
+void Superbar::taskGroupPositionChanged(AbstractGroupableItem*)
+{}
 
 #include "main.moc"
