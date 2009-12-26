@@ -1,11 +1,11 @@
-#include "launcher_button.h"
+#include "TaskButton.h"
 
 #include <KConfigGroup>
 #include <KDesktopFile>
 #include <KRun>
 #include <KUrl>
 
-LauncherButton::LauncherButton(KUrl url, QGraphicsItem* parent)
+TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
     : Plasma::IconWidget(parent),
       m_url(url)
 {
@@ -26,9 +26,9 @@ LauncherButton::LauncherButton(KUrl url, QGraphicsItem* parent)
     connect(this, SIGNAL(clicked()), this, SLOT(launch()));
 }
 
-void LauncherButton::launch()
+void TaskButton::launch()
 {
     new KRun(m_url, NULL);
 }
 
-#include "launcher_button.moc"
+#include "TaskButton.moc"

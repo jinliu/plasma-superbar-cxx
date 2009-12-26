@@ -1,4 +1,4 @@
-#include "launcher_button.h"
+#include "TaskButton.h"
 
 #include <Plasma/Applet>
 #include <Plasma/IconWidget>
@@ -58,7 +58,7 @@ void Superbar::init()
     foreach (QString i, favorites) {
         KUrl url(i);
         if (url.isValid() && url.isLocalFile() && KDesktopFile::isDesktopFile(url.toLocalFile())) {
-            LauncherButton* button = new LauncherButton(url, this);
+            TaskButton* button = new TaskButton(url, this);
             m_layout->addItem(button);
         }
     }
@@ -109,4 +109,4 @@ void Superbar::taskGroupRemoved(AbstractGroupableItem* groupableItem)
 void Superbar::taskGroupPositionChanged(AbstractGroupableItem*)
 {}
 
-#include "main.moc"
+#include "Applet.moc"

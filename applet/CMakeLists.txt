@@ -14,8 +14,8 @@ include_directories(
 
 # We add our source code here
 set(applet_SRCS
-  main.cpp
-  launcher_button.cpp
+  Applet.cpp
+  TaskButton.cpp
   )
 
 # Now make sure all files get to the right place
