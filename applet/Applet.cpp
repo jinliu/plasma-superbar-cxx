@@ -10,7 +10,6 @@
 #include <taskmanager/taskactions.h>
 
 #include <QGraphicsLinearLayout>
-#include <QHash>
 
 using TaskManager::AbstractGroupableItem;
 
@@ -29,7 +28,6 @@ private slots:
 private:
     QGraphicsLinearLayout* m_layout;
     TaskManager::GroupManager* m_groupManager;
-    QHash<AbstractGroupableItem*, TaskButton*> m_tasksHash;
 };
 
 K_EXPORT_PLASMA_APPLET(superbar-cxx, Superbar)
@@ -83,25 +81,38 @@ void Superbar::init()
 
 void Superbar::taskGroupAdded(AbstractGroupableItem* taskItem)
 {
-    if (m_tasksHash.contains(taskItem)) {
-        qWarning("taskGroupAdded: item already exist: %s", qPrintable(taskItem->name()));
-        return;
+    for (int i=0; i<m_layout->count(); ++i)
+    {
+        TaskButton* button = static_cast<TaskButton*>(m_layout->itemAt(i));
+        if (button->matches(taskItem)) {
+            if (button->hasTask())
+                qWarning("taskGroupAdded: item already exist: %s", qPrintable(taskItem->name()));
+            else
+                button->setTaskItem(taskItem);
+            return;
+        }
     }
     TaskButton* button = new TaskButton(taskItem, this);
     m_layout->addItem(button);
-    m_tasksHash[taskItem] = button;
 }
 
 
 void Superbar::taskGroupRemoved(AbstractGroupableItem* taskItem)
 {
-    TaskButton* button = m_tasksHash.take(taskItem);
-    if (button == NULL) {
-        qWarning("taskGroupRemoved: trying to remove non-existant task: %s", qPrintable(taskItem->name()));
-        return;
+    for (int i=0; i<m_layout->count(); ++i)
+    {
+        TaskButton* button = static_cast<TaskButton*>(m_layout->itemAt(i));
+        if (button->matches(taskItem)) {
+            if (button->hasLauncher())
+                button->resetTaskItem();
+            else {
+                m_layout->removeAt(i);
+                delete button;
+            }
+            return;
+        }
     }
-    m_layout->removeItem(button);
-    delete button;
+    qWarning("taskGroupRemoved: trying to remove non-existant task: %s", qPrintable(taskItem->name()));
 }
 
 

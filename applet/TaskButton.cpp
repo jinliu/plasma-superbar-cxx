@@ -4,7 +4,12 @@
 #include <KDesktopFile>
 #include <KRun>
 #include <KUrl>
-#include "taskmanager/taskitem.h"
+#include <KWindowSystem>
+#include <taskmanager/taskitem.h>
+#include <taskmanager/taskgroup.h>
+
+using TaskManager::TaskItem;
+using TaskManager::TaskGroup;
 
 TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
     : Plasma::IconWidget(parent),
@@ -25,6 +30,13 @@ TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
     QString icon = desktopFile.readIcon();
     setIcon(icon);
 
+    // Build matching keys.
+    // A launcher matches a task if the task's window class matches
+    // the launcher's title or executable name.
+    //TODO: refine this rule.
+    m_keys.push_back(title.toLower());
+    m_keys.push_back(executable.split(" ").front().split("/").back());
+    
     connect(this, SIGNAL(clicked()), this, SLOT(launch()));
 }
 
@@ -35,6 +47,32 @@ TaskButton::TaskButton(AbstractGroupableItem* taskItem, QGraphicsItem* parent)
     setIcon(taskItem->icon());
     
     connect(this, SIGNAL(clicked()), this, SLOT(launch()));
+}
+
+void TaskButton::setTaskItem(AbstractGroupableItem* taskItem)
+{
+    m_taskItem = taskItem;
+}
+
+void TaskButton::resetTaskItem()
+{
+    m_taskItem = NULL;
+}
+
+bool TaskButton::matches(AbstractGroupableItem* taskItem)
+{
+    if (m_taskItem)
+        return m_taskItem == taskItem;
+    TaskItem* t;
+    if (taskItem->isGroupItem())
+        t = static_cast<TaskItem*>(static_cast<TaskGroup*>(taskItem)->members().first());
+    else
+        t = static_cast<TaskItem*>(taskItem);
+    QString windowClass = t->task()->classClass().toLower();
+    foreach (QString key, m_keys)
+        if (windowClass == key)
+            return true;
+    return false;
 }
 
 void TaskButton::launch()
