@@ -19,6 +19,7 @@ TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
     KDesktopFile desktopFile(m_url.toLocalFile());
     KConfigGroup config = desktopFile.desktopGroup();
     QString executable = config.readPathEntry("Exec", QString());
+    /*
     QString title = desktopFile.readName();
     if (title.isEmpty())
         title = m_url.fileName();
@@ -27,15 +28,20 @@ TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
         description = desktopFile.readComment();
     if (description.isEmpty())
         description = m_url.path();
+    */
     QString icon = desktopFile.readIcon();
     setIcon(icon);
 
     // Build matching keys.
     // A launcher matches a task if the task's window class matches
-    // the launcher's title or executable name.
+    // the launcher's title or comment or executable name.
     //TODO: refine this rule.
-    m_keys.push_back(title.toLower());
-    m_keys.push_back(executable.split(" ").front().split("/").back());
+    if (!desktopFile.readName().isEmpty())
+        m_keys.push_back(desktopFile.readName().toLower());
+    if (!desktopFile.readComment().isEmpty())
+        m_keys.push_back(desktopFile.readComment().toLower());
+    m_keys.push_back(executable.split(" ").front()
+                     .split("/").back().toLower());
     
     connect(this, SIGNAL(clicked()), this, SLOT(launch()));
 }
