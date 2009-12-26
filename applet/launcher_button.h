@@ -7,13 +7,13 @@
 
 class LauncherButton : public Plasma::IconWidget
 {
-    Q_OBJECT        
+    Q_OBJECT
 public:
     LauncherButton(KUrl url, QGraphicsItem* parent);
 
-private slots:    
+private slots:
     void launch();
-    
+
 private:
     KUrl m_url;
 };

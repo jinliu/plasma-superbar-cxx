@@ -10,6 +10,7 @@
 #include <taskmanager/taskactions.h>
 
 #include <QGraphicsLinearLayout>
+#include <QHash>
 
 using TaskManager::AbstractGroupableItem;
 
@@ -24,10 +25,11 @@ private slots:
     void taskGroupAdded(AbstractGroupableItem*);
     void taskGroupRemoved(AbstractGroupableItem*);
     void taskGroupPositionChanged(AbstractGroupableItem*);
-    
+
 private:
     QGraphicsLinearLayout* m_layout;
     TaskManager::GroupManager* m_groupManager;
+    QHash<AbstractGroupableItem*, Plasma::IconWidget*> m_tasksHash;
 };
 
 K_EXPORT_PLASMA_APPLET(superbar-cxx, Superbar)
@@ -40,29 +42,29 @@ Superbar::Superbar(QObject *parent, const QVariantList &args)
 {
     m_groupManager->setGroupingStrategy(TaskManager::GroupManager::ProgramGrouping);
     m_groupManager->setSortingStrategy(TaskManager::GroupManager::AlphaSorting);
+
+    setHasConfigurationInterface(false);
+    setAspectRatioMode(Plasma::IgnoreAspectRatio);
 }
 
 
 void Superbar::init()
 {
-    setHasConfigurationInterface(false);
-    setAspectRatioMode(Plasma::IgnoreAspectRatio);
-
     // Create launchers from Kickoff favorites
     KConfig kickoffConf("kickoffrc", KConfig::NoGlobals);
     KConfigGroup favoritesGroup(&kickoffConf, "Favorites");
     QStringList favorites = favoritesGroup.readEntry("FavoriteURLs", QStringList());
 
-    for (int i = 0; i < favorites.size(); ++i) {
-        KUrl url(favorites[i]);
+    foreach (QString i, favorites) {
+        KUrl url(i);
         if (url.isValid() && url.isLocalFile() && KDesktopFile::isDesktopFile(url.toLocalFile())) {
             LauncherButton* button = new LauncherButton(url, this);
             m_layout->addItem(button);
         }
     }
-    
+
     setLayout(m_layout);
-    
+
     // Setup TaskManager
     connect(
         m_groupManager->rootGroup(), SIGNAL(itemAdded(AbstractGroupableItem*)),
@@ -79,16 +81,29 @@ void Superbar::init()
 }
 
 
-void Superbar::taskGroupAdded(AbstractGroupableItem* abstractItem)
+void Superbar::taskGroupAdded(AbstractGroupableItem* groupableItem)
 {
+    if (m_tasksHash.contains(groupableItem)) {
+        qWarning("taskGroupAdded: item already exist: %s", qPrintable(groupableItem->name()));
+        return;
+    }
     Plasma::IconWidget* button = new Plasma::IconWidget(this);
-    button->setIcon(abstractItem->icon());
+    button->setIcon(groupableItem->icon());
     m_layout->addItem(button);
+    m_tasksHash[groupableItem] = button;
 }
 
 
-void Superbar::taskGroupRemoved(AbstractGroupableItem*)
-{}
+void Superbar::taskGroupRemoved(AbstractGroupableItem* groupableItem)
+{
+    Plasma::IconWidget* button = m_tasksHash.take(groupableItem);
+    if (button == NULL) {
+        qWarning("taskGroupRemoved: trying to remove non-existant task: %s", qPrintable(groupableItem->name()));
+        return;
+    }
+    m_layout->removeItem(button);
+    delete button;
+}
 
 
 void Superbar::taskGroupPositionChanged(AbstractGroupableItem*)
