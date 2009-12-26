@@ -29,7 +29,7 @@ private slots:
 private:
     QGraphicsLinearLayout* m_layout;
     TaskManager::GroupManager* m_groupManager;
-    QHash<AbstractGroupableItem*, Plasma::IconWidget*> m_tasksHash;
+    QHash<AbstractGroupableItem*, TaskButton*> m_tasksHash;
 };
 
 K_EXPORT_PLASMA_APPLET(superbar-cxx, Superbar)
@@ -81,24 +81,23 @@ void Superbar::init()
 }
 
 
-void Superbar::taskGroupAdded(AbstractGroupableItem* groupableItem)
+void Superbar::taskGroupAdded(AbstractGroupableItem* taskItem)
 {
-    if (m_tasksHash.contains(groupableItem)) {
-        qWarning("taskGroupAdded: item already exist: %s", qPrintable(groupableItem->name()));
+    if (m_tasksHash.contains(taskItem)) {
+        qWarning("taskGroupAdded: item already exist: %s", qPrintable(taskItem->name()));
         return;
     }
-    Plasma::IconWidget* button = new Plasma::IconWidget(this);
-    button->setIcon(groupableItem->icon());
+    TaskButton* button = new TaskButton(taskItem, this);
     m_layout->addItem(button);
-    m_tasksHash[groupableItem] = button;
+    m_tasksHash[taskItem] = button;
 }
 
 
-void Superbar::taskGroupRemoved(AbstractGroupableItem* groupableItem)
+void Superbar::taskGroupRemoved(AbstractGroupableItem* taskItem)
 {
-    Plasma::IconWidget* button = m_tasksHash.take(groupableItem);
+    TaskButton* button = m_tasksHash.take(taskItem);
     if (button == NULL) {
-        qWarning("taskGroupRemoved: trying to remove non-existant task: %s", qPrintable(groupableItem->name()));
+        qWarning("taskGroupRemoved: trying to remove non-existant task: %s", qPrintable(taskItem->name()));
         return;
     }
     m_layout->removeItem(button);
