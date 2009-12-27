@@ -33,7 +33,8 @@ private:
                             QWidget *widget);
     /*override*/ void mousePressEvent(QGraphicsSceneMouseEvent *event);
     /*override*/ void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
-
+    /*override*/ QSizeF sizeHint(Qt::SizeHint which, const QSizeF& constraint) const;
+    
     KUrl m_url;
     AbstractGroupableItem* m_taskItem;
 

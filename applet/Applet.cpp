@@ -6,6 +6,7 @@
 #include <KUrl>
 #include <taskmanager/taskactions.h>
 
+
 K_EXPORT_PLASMA_APPLET(superbar-cxx, Superbar)
 
 
@@ -38,7 +39,7 @@ void Superbar::init()
     }
 
     setLayout(m_layout);
-
+    
     // Setup TaskManager
     connect(
         m_groupManager->rootGroup(), SIGNAL(itemAdded(AbstractGroupableItem*)),
@@ -94,5 +95,6 @@ void Superbar::taskGroupRemoved(AbstractGroupableItem* taskItem)
 
 void Superbar::taskGroupPositionChanged(AbstractGroupableItem*)
 {}
+
 
 #include "Applet.moc"

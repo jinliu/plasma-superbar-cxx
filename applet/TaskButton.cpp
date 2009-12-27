@@ -7,11 +7,16 @@
 #include <taskmanager/taskitem.h>
 #include <taskmanager/taskgroup.h>
 
+#include <QGraphicsLayout>
 #include <QGraphicsSceneMouseEvent>
+
+#include <limits>
 
 using TaskManager::TaskPtr;
 using TaskManager::TaskItem;
 using TaskManager::TaskGroup;
+using namespace std;
+
 
 TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
     : QGraphicsWidget(parent),
@@ -48,6 +53,7 @@ TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
     init();
 }
 
+
 TaskButton::TaskButton(AbstractGroupableItem* taskItem, QGraphicsItem* parent)
     : QGraphicsWidget(parent),
       m_taskItem(taskItem),
@@ -56,12 +62,17 @@ TaskButton::TaskButton(AbstractGroupableItem* taskItem, QGraphicsItem* parent)
     init();
 }
 
+
 void TaskButton::init()
 {
+    setAcceptHoverEvents(true);
+    //setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
+    
     m_background = new Plasma::FrameSvg(this);
     m_background->setImagePath("widgets/tasks");
     m_background->setElementPrefix("focus");    
 }
+
 
 void TaskButton::setTaskItem(AbstractGroupableItem* taskItem)
 {
@@ -69,11 +80,13 @@ void TaskButton::setTaskItem(AbstractGroupableItem* taskItem)
     update();
 }
 
+
 void TaskButton::resetTaskItem()
 {
     m_taskItem = NULL;
     update();
 }
+
 
 bool TaskButton::matches(AbstractGroupableItem* taskItem)
 {
@@ -93,6 +106,31 @@ bool TaskButton::matches(AbstractGroupableItem* taskItem)
             return true;
     return false;
 }
+
+
+QSizeF TaskButton::sizeHint(Qt::SizeHint which, const QSizeF& constraint) const
+{
+    Q_UNUSED(constraint);
+
+    switch (which) {
+    case Qt::MinimumSize:
+        return QSizeF(0.0, 0.0);
+    case Qt::PreferredSize:
+    {
+        QRectF r = parentWidget()->layout()->contentsRect();
+        if (r.height()<=0)
+            return QSizeF();
+        return QSizeF(r.height(), r.height());
+    }
+    case Qt::MaximumSize:
+        return QSizeF(std::numeric_limits<qreal>::max(), std::numeric_limits<qreal>::max());
+    case Qt::MinimumDescent:
+        return QSizeF(0.0, 0.0);
+    default:
+        return QSizeF();
+    }
+}
+
 
 void TaskButton::paint(QPainter *painter,
                        const QStyleOptionGraphicsItem *option,
@@ -140,5 +178,6 @@ void TaskButton::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
         break;
     }
 }
+
 
 #include "TaskButton.moc"
