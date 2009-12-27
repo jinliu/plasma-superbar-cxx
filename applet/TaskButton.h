@@ -1,15 +1,18 @@
 #ifndef SUPERBAR_TASK_BUTTON_H
 #define SUPERBAR_TASK_BUTTON_H
 
-#include <Plasma/IconWidget>
+#include <Plasma/FrameSvg>
+#include <KIcon>
 #include <KUrl>
 #include <taskmanager/abstractgroupableitem.h>
 
+#include <QGraphicsWidget>
 #include <QList>
+#include <QPainter>
 
 using TaskManager::AbstractGroupableItem;
 
-class TaskButton : public Plasma::IconWidget
+class TaskButton : public QGraphicsWidget
 {
     Q_OBJECT
 public:
@@ -20,16 +23,23 @@ public:
     void resetTaskItem();
     bool hasTask() { return m_taskItem; }
     bool hasLauncher() { return !m_url.isEmpty(); }
-    
+
     bool matches(AbstractGroupableItem* taskItem);
-    
-private slots:
-    void launch();
 
 private:
+    void init();
+    /*override*/ void paint(QPainter *painter,
+                            const QStyleOptionGraphicsItem *option,
+                            QWidget *widget);
+    /*override*/ void mousePressEvent(QGraphicsSceneMouseEvent *event);
+    /*override*/ void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
+
     KUrl m_url;
-    QList<QString> m_keys;
     AbstractGroupableItem* m_taskItem;
+
+    QList<QString> m_keys;
+    KIcon m_icon;
+    Plasma::FrameSvg* m_background;
 };
 
 #endif //SUPERBAR_TASK_BUTTON_H

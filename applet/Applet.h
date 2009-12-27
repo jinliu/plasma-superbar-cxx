@@ -14,7 +14,7 @@ class Superbar : public Plasma::Applet
     Q_OBJECT
 public:
     Superbar(QObject *parent, const QVariantList &args);
-    void init();
+    /*override*/ void init();
 
 private slots:
     void taskGroupAdded(AbstractGroupableItem*);

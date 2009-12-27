@@ -3,22 +3,22 @@
 #include <KConfigGroup>
 #include <KDesktopFile>
 #include <KRun>
-#include <KUrl>
-#include <KWindowSystem>
 #include <taskmanager/task.h>
 #include <taskmanager/taskitem.h>
 #include <taskmanager/taskgroup.h>
+
+#include <QGraphicsSceneMouseEvent>
 
 using TaskManager::TaskPtr;
 using TaskManager::TaskItem;
 using TaskManager::TaskGroup;
 
 TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
-    : Plasma::IconWidget(parent),
+    : QGraphicsWidget(parent),
       m_url(url),
       m_taskItem(NULL)
 {
-    KDesktopFile desktopFile(m_url.toLocalFile());
+    KDesktopFile desktopFile(url.toLocalFile());
     KConfigGroup config = desktopFile.desktopGroup();
     QString executable = config.readPathEntry("Exec", QString());
     /*
@@ -32,7 +32,7 @@ TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
         description = m_url.path();
     */
     QString icon = desktopFile.readIcon();
-    setIcon(icon);
+    m_icon = KIcon(icon);
 
     // Build matching keys.
     // A launcher matches a task if the task's window class matches
@@ -44,27 +44,35 @@ TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
         m_keys.push_back(desktopFile.readComment().toLower());
     m_keys.push_back(executable.split(" ").front()
                      .split("/").back().toLower());
-    
-    connect(this, SIGNAL(clicked()), this, SLOT(launch()));
+
+    init();
 }
 
 TaskButton::TaskButton(AbstractGroupableItem* taskItem, QGraphicsItem* parent)
-    : Plasma::IconWidget(parent),
-      m_taskItem(taskItem)
+    : QGraphicsWidget(parent),
+      m_taskItem(taskItem),
+      m_icon(taskItem->icon())
 {
-    setIcon(taskItem->icon());
-    
-    connect(this, SIGNAL(clicked()), this, SLOT(launch()));
+    init();
+}
+
+void TaskButton::init()
+{
+    m_background = new Plasma::FrameSvg(this);
+    m_background->setImagePath("widgets/tasks");
+    m_background->setElementPrefix("focus");    
 }
 
 void TaskButton::setTaskItem(AbstractGroupableItem* taskItem)
 {
     m_taskItem = taskItem;
+    update();
 }
 
 void TaskButton::resetTaskItem()
 {
     m_taskItem = NULL;
+    update();
 }
 
 bool TaskButton::matches(AbstractGroupableItem* taskItem)
@@ -86,18 +94,51 @@ bool TaskButton::matches(AbstractGroupableItem* taskItem)
     return false;
 }
 
-void TaskButton::launch()
+void TaskButton::paint(QPainter *painter,
+                       const QStyleOptionGraphicsItem *option,
+                       QWidget *widget)
 {
-    if (m_taskItem) // task mode
+    Q_UNUSED(option);
+    Q_UNUSED(widget);
+
+    const QRectF bounds(boundingRect());
+    
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setRenderHint(QPainter::SmoothPixmapTransform);
+
+    if (m_taskItem)
     {
-        if (!m_taskItem->isGroupItem()) {
-            TaskManager::TaskItem* t = static_cast<TaskManager::TaskItem*>(m_taskItem);
-            TaskPtr task = t->task();
-            if (task)
-                task->activateRaiseOrIconify();
-        }
-    } else // launcher mode
-        new KRun(m_url, NULL);
+        m_background->resizeFrame(bounds.size());
+        m_background->paintFrame(painter);
+    }
+    m_icon.paint(painter, bounds.toRect());
+}
+
+
+void TaskButton::mousePressEvent(QGraphicsSceneMouseEvent* event)
+{
+    event->accept();
+}
+
+
+void TaskButton::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
+{
+    switch (event->button()) {
+    case Qt::LeftButton:
+        if (m_taskItem) // task mode
+        {
+            if (!m_taskItem->isGroupItem()) {
+                TaskManager::TaskItem* t = static_cast<TaskManager::TaskItem*>(m_taskItem);
+                TaskPtr task = t->task();
+                if (task)
+                    task->activateRaiseOrIconify();
+            }
+        } else // launcher mode
+            new KRun(m_url, NULL);
+        break;
+    default:
+        break;
+    }
 }
 
 #include "TaskButton.moc"
