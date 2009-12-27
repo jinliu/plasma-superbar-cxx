@@ -1,34 +1,10 @@
+#include "Applet.h"
 #include "TaskButton.h"
 
-#include <Plasma/Applet>
-#include <Plasma/IconWidget>
 #include <KConfig>
 #include <KDesktopFile>
 #include <KUrl>
-#include <taskmanager/abstractgroupableitem.h>
-#include <taskmanager/groupmanager.h>
 #include <taskmanager/taskactions.h>
-
-#include <QGraphicsLinearLayout>
-
-using TaskManager::AbstractGroupableItem;
-
-class Superbar : public Plasma::Applet
-{
-    Q_OBJECT
-public:
-    Superbar(QObject *parent, const QVariantList &args);
-    void init();
-
-private slots:
-    void taskGroupAdded(AbstractGroupableItem*);
-    void taskGroupRemoved(AbstractGroupableItem*);
-    void taskGroupPositionChanged(AbstractGroupableItem*);
-
-private:
-    QGraphicsLinearLayout* m_layout;
-    TaskManager::GroupManager* m_groupManager;
-};
 
 K_EXPORT_PLASMA_APPLET(superbar-cxx, Superbar)
 

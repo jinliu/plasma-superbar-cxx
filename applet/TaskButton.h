@@ -5,7 +5,7 @@
 #include <KUrl>
 #include <taskmanager/abstractgroupableitem.h>
 
-#include <vector>
+#include <QList>
 
 using TaskManager::AbstractGroupableItem;
 
@@ -28,7 +28,7 @@ private slots:
 
 private:
     KUrl m_url;
-    std::vector<QString> m_keys;
+    QList<QString> m_keys;
     AbstractGroupableItem* m_taskItem;
 };
 
