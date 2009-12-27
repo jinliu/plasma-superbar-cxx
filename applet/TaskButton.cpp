@@ -5,9 +5,11 @@
 #include <KRun>
 #include <KUrl>
 #include <KWindowSystem>
+#include <taskmanager/task.h>
 #include <taskmanager/taskitem.h>
 #include <taskmanager/taskgroup.h>
 
+using TaskManager::TaskPtr;
 using TaskManager::TaskItem;
 using TaskManager::TaskGroup;
 
@@ -74,7 +76,10 @@ bool TaskButton::matches(AbstractGroupableItem* taskItem)
         t = static_cast<TaskItem*>(static_cast<TaskGroup*>(taskItem)->members().first());
     else
         t = static_cast<TaskItem*>(taskItem);
-    QString windowClass = t->task()->classClass().toLower();
+    TaskPtr task = t->task();
+    if (!task)
+        return false;
+    QString windowClass = task->classClass().toLower();
     foreach (QString key, m_keys)
         if (windowClass == key)
             return true;
@@ -87,7 +92,9 @@ void TaskButton::launch()
     {
         if (!m_taskItem->isGroupItem()) {
             TaskManager::TaskItem* t = static_cast<TaskManager::TaskItem*>(m_taskItem);
-            t->task()->activateRaiseOrIconify();
+            TaskPtr task = t->task();
+            if (task)
+                task->activateRaiseOrIconify();
         }
     } else // launcher mode
         new KRun(m_url, NULL);
