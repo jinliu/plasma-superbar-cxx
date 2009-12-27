@@ -97,4 +97,11 @@ void Superbar::taskGroupPositionChanged(AbstractGroupableItem*)
 {}
 
 
+void Superbar::resizeEvent(QGraphicsSceneResizeEvent* event)
+{
+    Plasma::Applet::resizeEvent(event);
+    m_layout->invalidate();
+    m_layout->activate();
+}
+
 #include "Applet.moc"

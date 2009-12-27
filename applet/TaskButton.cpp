@@ -66,11 +66,10 @@ TaskButton::TaskButton(AbstractGroupableItem* taskItem, QGraphicsItem* parent)
 void TaskButton::init()
 {
     setAcceptHoverEvents(true);
-    //setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
-    
+
     m_background = new Plasma::FrameSvg(this);
     m_background->setImagePath("widgets/tasks");
-    m_background->setElementPrefix("focus");    
+    m_background->setElementPrefix("focus");
 }
 
 
@@ -140,7 +139,7 @@ void TaskButton::paint(QPainter *painter,
     Q_UNUSED(widget);
 
     const QRectF bounds(boundingRect());
-    
+
     painter->setRenderHint(QPainter::Antialiasing);
     painter->setRenderHint(QPainter::SmoothPixmapTransform);
 

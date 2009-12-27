@@ -22,6 +22,8 @@ private slots:
     void taskGroupPositionChanged(AbstractGroupableItem*);
 
 private:
+    void resizeEvent(QGraphicsSceneResizeEvent* event);
+    
     QGraphicsLinearLayout* m_layout;
     TaskManager::GroupManager* m_groupManager;
 };
