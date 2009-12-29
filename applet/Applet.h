@@ -17,9 +17,7 @@ public:
     /*override*/ void init();
 
 private slots:
-    void taskGroupAdded(AbstractGroupableItem*);
-    void taskGroupRemoved(AbstractGroupableItem*);
-    void taskGroupPositionChanged(AbstractGroupableItem*);
+    void addTaskItem(AbstractGroupableItem* item);
 
 private:    
     QGraphicsLinearLayout* m_layout;

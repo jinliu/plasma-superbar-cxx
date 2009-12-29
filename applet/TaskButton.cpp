@@ -6,23 +6,19 @@
 #include <KRun>
 #include <taskmanager/task.h>
 #include <taskmanager/taskitem.h>
-#include <taskmanager/taskgroup.h>
 
 #include <QGraphicsSceneMouseEvent>
+#include <QPainter>
 
-#include <limits>
-
-using TaskManager::TaskPtr;
-using TaskManager::TaskItem;
-using TaskManager::TaskGroup;
+using namespace TaskManager;
 using namespace std;
 
 
-TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
-    : QGraphicsWidget(parent),
-      m_url(url),
-      m_abstractItem(NULL)
+TaskButton::TaskButton(KUrl url)
+    : m_url(url)
 {
+    init();
+
     KDesktopFile desktopFile(url.toLocalFile());
     KConfigGroup config = desktopFile.desktopGroup();
     QString executable = config.readPathEntry("Exec", QString());
@@ -49,17 +45,17 @@ TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
         m_keys.push_back(desktopFile.readComment().toLower());
     m_keys.push_back(executable.split(" ").front()
                      .split("/").back().toLower());
-
-    init();
 }
 
 
-TaskButton::TaskButton(AbstractGroupableItem* abstractItem, QGraphicsItem* parent)
-    : QGraphicsWidget(parent),
-      m_abstractItem(abstractItem),
-      m_icon(abstractItem->icon())
+TaskButton::TaskButton(AbstractGroupableItem* item, QString windowClass)
+    : m_icon(item->icon())
 {
     init();
+
+    windowClass = windowClass.toLower();
+    m_keys.push_back(windowClass);
+    tryAddTaskItem(item, windowClass);
 }
 
 
@@ -71,84 +67,69 @@ void TaskButton::init()
     m_background->setImagePath("widgets/tasks");
     m_background->setElementPrefix("normal");
     m_background->getMargins(m_leftMargin, m_topMargin, m_rightMargin, m_bottomMargin);
+
+    m_parentGroup = NULL;
 }
 
 
-void TaskButton::setTaskItem(AbstractGroupableItem* abstractItem)
+bool TaskButton::hasTask()
 {
-    m_abstractItem = abstractItem;
-    update();
+    return !m_tasks.empty();
 }
 
 
-void TaskButton::resetTaskItem()
+bool TaskButton::hasLauncher()
 {
-    m_abstractItem = NULL;
-    update();
+    return !m_url.isEmpty();
 }
 
 
-bool TaskButton::matches(AbstractGroupableItem* abstractItem)
+bool TaskButton::tryAddTaskItem(AbstractGroupableItem* item, QString windowClass)
 {
-    if (m_abstractItem)
-        return m_abstractItem == abstractItem;
-    TaskItem* taskItem = NULL;
-    if (abstractItem->isGroupItem()) {
-        TaskGroup* group = qobject_cast<TaskGroup*>(abstractItem);
-        if (group)
-            taskItem = qobject_cast<TaskItem*>(group->members().first());
-    } else
-        taskItem = qobject_cast<TaskItem*>(abstractItem);
-    if (!taskItem)
-        return false;
-    TaskPtr task = taskItem->task();
-    if (!task)
-        return false;
-    QString windowClass = task->classClass().toLower();
+    if (m_tasks.contains(item)) {
+        qWarning("TaskButton::tryAddTaskItem: item already exist: %s", qPrintable(windowClass));
+        return true;
+    }
+    windowClass = windowClass.toLower();
     foreach (QString key, m_keys)
-        if (windowClass == key)
+        if (windowClass == key) {
+            m_tasks.push_back(item);
+            if (m_tasks.size() == 1) {
+                m_parentGroup = item->parentGroup();
+                if (m_parentGroup)
+                    connect(m_parentGroup, SIGNAL(itemRemoved(AbstractGroupableItem*)),
+                            this, SLOT(tryRemoveTaskItem(AbstractGroupableItem*)));
+                else
+                    qWarning("TaskButton::tryAddTaskItem: no parentGroup: %s", qPrintable(windowClass));
+                update();
+            }
             return true;
+        }
     return false;
 }
 
 
-QSizeF TaskButton::sizeHint(Qt::SizeHint which, const QSizeF& constraint) const
+bool TaskButton::tryRemoveTaskItem(AbstractGroupableItem* item)
 {
-    if (which == Qt::PreferredSize)
-        return buttonSize(KIconLoader::SizeLarge);
-    else if (which == Qt::MinimumSize)
-        return buttonSize(KIconLoader::SizeSmall);
-    else
-        return QGraphicsWidget::sizeHint(which, constraint);
+    if (m_tasks.removeAll(item) == 0)
+        return false;
+    if (m_tasks.empty()) {
+        disconnect(m_parentGroup, SIGNAL(itemRemoved(AbstractGroupableItem*)),
+                   this, SLOT(tryRemoveTaskItem(AbstractGroupableItem*)));
+        m_parentGroup = NULL;
+        if (hasLauncher())
+            update();
+        else
+            delete this;
+    }
+    return true;
 }
+
 
 QSizeF TaskButton::buttonSize(qreal iconSize) const
 {
     return QSizeF(iconSize+m_leftMargin+m_rightMargin,
                   iconSize+m_topMargin+m_bottomMargin);
-}
-
-void TaskButton::paint(QPainter *painter,
-                       const QStyleOptionGraphicsItem *option,
-                       QWidget *widget)
-{
-    Q_UNUSED(option);
-    Q_UNUSED(widget);
-
-    const QRectF bounds(boundingRect());
-
-    painter->setRenderHint(QPainter::Antialiasing);
-    painter->setRenderHint(QPainter::SmoothPixmapTransform);
-
-    if (m_abstractItem) {
-        m_background->resizeFrame(bounds.size());
-        m_background->paintFrame(painter);
-    }
-    
-    m_icon.paint(painter,
-                 bounds.adjusted(m_leftMargin, m_topMargin,
-                                 -m_rightMargin, -m_bottomMargin
-                     ).toRect());
 }
 
 
@@ -162,11 +143,11 @@ void TaskButton::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
     switch (event->button()) {
     case Qt::LeftButton:
-        if (m_abstractItem) { // task mode
-            if (!m_abstractItem->isGroupItem()) {
-                TaskItem* t = qobject_cast<TaskItem*>(m_abstractItem);
-                if (t) {
-                    TaskPtr task = t->task();
+        if (hasTask()) { // task mode
+            if (!m_tasks.front()->isGroupItem()) {
+                TaskItem* taskItem = qobject_cast<TaskItem*>(m_tasks.front());
+                if (taskItem) {
+                    TaskPtr task = taskItem->task();
                     if (task)
                         task->activateRaiseOrIconify();
                 }
@@ -177,6 +158,39 @@ void TaskButton::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
     default:
         break;
     }
+}
+
+
+void TaskButton::paint(QPainter *painter,
+                       const QStyleOptionGraphicsItem *option,
+                       QWidget *widget)
+{
+    Q_UNUSED(option);
+    Q_UNUSED(widget);
+
+    painter->setRenderHint(QPainter::Antialiasing);
+    painter->setRenderHint(QPainter::SmoothPixmapTransform);
+
+    const QRectF bounds(boundingRect());
+    if (hasTask()) {
+        m_background->resizeFrame(bounds.size());
+        m_background->paintFrame(painter);
+    }    
+    m_icon.paint(painter,
+                 bounds.adjusted(m_leftMargin, m_topMargin,
+                                 -m_rightMargin, -m_bottomMargin
+                     ).toRect());
+}
+
+
+QSizeF TaskButton::sizeHint(Qt::SizeHint which, const QSizeF& constraint) const
+{
+    if (which == Qt::PreferredSize)
+        return buttonSize(KIconLoader::SizeLarge);
+    else if (which == Qt::MinimumSize)
+        return buttonSize(KIconLoader::SizeSmall);
+    else
+        return QGraphicsWidget::sizeHint(which, constraint);
 }
 
 

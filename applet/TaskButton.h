@@ -5,10 +5,10 @@
 #include <KIcon>
 #include <KUrl>
 #include <taskmanager/abstractgroupableitem.h>
+#include <taskmanager/taskgroup.h>
 
 #include <QGraphicsWidget>
 #include <QList>
-#include <QPainter>
 
 using TaskManager::AbstractGroupableItem;
 
@@ -16,33 +16,35 @@ class TaskButton : public QGraphicsWidget
 {
     Q_OBJECT
 public:
-    TaskButton(KUrl url, QGraphicsItem* parent);
-    TaskButton(AbstractGroupableItem* taskItem, QGraphicsItem* parent);
+    TaskButton(KUrl url);
+    TaskButton(AbstractGroupableItem* item, QString windowClass);
 
-    void setTaskItem(AbstractGroupableItem* taskItem);
-    void resetTaskItem();
-    bool hasTask() { return m_abstractItem; }
-    bool hasLauncher() { return !m_url.isEmpty(); }
+    bool hasTask();
+    bool hasLauncher();
 
-    bool matches(AbstractGroupableItem* abstractItem);
+    bool tryAddTaskItem(AbstractGroupableItem* item, QString windowClass);
+    
+public slots:    
+    bool tryRemoveTaskItem(AbstractGroupableItem* item);
 
 private:
     void init();
     QSizeF buttonSize(qreal iconSize) const;
+    /*override*/ void mousePressEvent(QGraphicsSceneMouseEvent *event);
+    /*override*/ void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
     /*override*/ void paint(QPainter *painter,
                             const QStyleOptionGraphicsItem *option,
                             QWidget *widget);
-    /*override*/ void mousePressEvent(QGraphicsSceneMouseEvent *event);
-    /*override*/ void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
     /*override*/ QSizeF sizeHint(Qt::SizeHint which, const QSizeF& constraint) const;
     
     KUrl m_url;
-    AbstractGroupableItem* m_abstractItem;
+    QList<AbstractGroupableItem*> m_tasks;
 
     QList<QString> m_keys;
     KIcon m_icon;
     Plasma::FrameSvg* m_background;
     qreal m_leftMargin, m_topMargin, m_rightMargin, m_bottomMargin;
+    TaskManager::TaskGroup* m_parentGroup;
 };
 
 #endif //SUPERBAR_TASK_BUTTON_H

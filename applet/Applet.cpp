@@ -5,19 +5,24 @@
 #include <KConfig>
 #include <KDesktopFile>
 #include <KUrl>
-#include <taskmanager/taskactions.h>
+#include <taskmanager/task.h>
+#include <taskmanager/taskgroup.h>
+#include <taskmanager/taskitem.h>
+
+using namespace TaskManager;
 
 
 K_EXPORT_PLASMA_APPLET(superbar-cxx, Superbar)
 
 
+
 Superbar::Superbar(QObject *parent, const QVariantList &args)
     : Plasma::Applet(parent, args),
     m_layout(new QGraphicsLinearLayout(this)),
-    m_groupManager(new TaskManager::GroupManager(this))
+    m_groupManager(new GroupManager(this))
 {
-    m_groupManager->setGroupingStrategy(TaskManager::GroupManager::ProgramGrouping);
-    m_groupManager->setSortingStrategy(TaskManager::GroupManager::NoSorting);
+    m_groupManager->setGroupingStrategy(GroupManager::ProgramGrouping);
+    m_groupManager->setSortingStrategy(GroupManager::AlphaSorting);
 
     setHasConfigurationInterface(false);
     setAspectRatioMode(Plasma::IgnoreAspectRatio);
@@ -35,10 +40,8 @@ void Superbar::init()
 
     foreach (QString i, favorites) {
         KUrl url(i);
-        if (url.isValid() && url.isLocalFile() && KDesktopFile::isDesktopFile(url.toLocalFile())) {
-            TaskButton* button = new TaskButton(url, this);
-            m_layout->addItem(button);
-        }
+        if (url.isValid() && url.isLocalFile() && KDesktopFile::isDesktopFile(url.toLocalFile()))
+            m_layout->addItem(new TaskButton(url));
     }
 
     setLayout(m_layout);
@@ -46,56 +49,35 @@ void Superbar::init()
     // Setup TaskManager
     connect(
         m_groupManager->rootGroup(), SIGNAL(itemAdded(AbstractGroupableItem*)),
-        this, SLOT(taskGroupAdded(AbstractGroupableItem*)));
-    connect(
-        m_groupManager->rootGroup(), SIGNAL(itemRemoved(AbstractGroupableItem*)),
-        this, SLOT(taskGroupRemoved(AbstractGroupableItem*)));
-    connect(
-        m_groupManager->rootGroup(), SIGNAL(itemPositionChanged(AbstractGroupableItem*)),
-        this, SLOT(taskGroupPositionChanged(AbstractGroupableItem*)));
-    m_groupManager->reconnect();
+        this, SLOT(addTaskItem(AbstractGroupableItem*)));
     foreach (AbstractGroupableItem* item, m_groupManager->rootGroup()->members())
-        taskGroupAdded(item);
+        addTaskItem(item);
 }
 
 
-void Superbar::taskGroupAdded(AbstractGroupableItem* abstractItem)
+void Superbar::addTaskItem(AbstractGroupableItem* item)
 {
+    // Get windowClassClass from item
+    QString windowClass;
+    if (item->isGroupItem())
+        windowClass = item->name();
+    else {
+        TaskItem* taskItem = qobject_cast<TaskItem*>(item);
+        if (!taskItem)
+            return;
+        TaskPtr task = taskItem->task();
+        if (!task)
+            return;
+        windowClass = task->classClass();
+    }
+
     for (int i=0; i<m_layout->count(); ++i) {
         TaskButton* button = static_cast<TaskButton*>(m_layout->itemAt(i));
-        if (button->matches(abstractItem)) {
-            if (button->hasTask())
-                qWarning("taskGroupAdded: item already exist: %s", qPrintable(abstractItem->name()));
-            else
-                button->setTaskItem(abstractItem);
+        if (button->tryAddTaskItem(item, windowClass))
             return;
-        }
     }
-    TaskButton* button = new TaskButton(abstractItem, this);
-    m_layout->addItem(button);
+    m_layout->addItem(new TaskButton(item, windowClass));
 }
-
-
-void Superbar::taskGroupRemoved(AbstractGroupableItem* abstractItem)
-{
-    for (int i=0; i<m_layout->count(); ++i) {
-        TaskButton* button = static_cast<TaskButton*>(m_layout->itemAt(i));
-        if (button->matches(abstractItem)) {
-            if (button->hasLauncher())
-                button->resetTaskItem();
-            else {
-                m_layout->removeAt(i);
-                delete button;
-            }
-            return;
-        }
-    }
-    qWarning("taskGroupRemoved: trying to remove non-existant task: %s", qPrintable(abstractItem->name()));
-}
-
-
-void Superbar::taskGroupPositionChanged(AbstractGroupableItem*)
-{}
 
 
 #include "Applet.moc"
