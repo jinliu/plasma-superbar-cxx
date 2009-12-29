@@ -1,6 +1,7 @@
 #include "Applet.h"
 #include "TaskButton.h"
 
+#include <Plasma/Containment>
 #include <KConfig>
 #include <KDesktopFile>
 #include <KUrl>
@@ -25,6 +26,8 @@ Superbar::Superbar(QObject *parent, const QVariantList &args)
 
 void Superbar::init()
 {
+    m_layout->setContentsMargins(0, 0, 0, 0);
+
     // Create launchers from Kickoff favorites
     KConfig kickoffConf("kickoffrc", KConfig::NoGlobals);
     KConfigGroup favoritesGroup(&kickoffConf, "Favorites");
