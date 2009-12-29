@@ -59,30 +59,28 @@ void Superbar::init()
 }
 
 
-void Superbar::taskGroupAdded(AbstractGroupableItem* taskItem)
+void Superbar::taskGroupAdded(AbstractGroupableItem* abstractItem)
 {
-    for (int i=0; i<m_layout->count(); ++i)
-    {
+    for (int i=0; i<m_layout->count(); ++i) {
         TaskButton* button = static_cast<TaskButton*>(m_layout->itemAt(i));
-        if (button->matches(taskItem)) {
+        if (button->matches(abstractItem)) {
             if (button->hasTask())
-                qWarning("taskGroupAdded: item already exist: %s", qPrintable(taskItem->name()));
+                qWarning("taskGroupAdded: item already exist: %s", qPrintable(abstractItem->name()));
             else
-                button->setTaskItem(taskItem);
+                button->setTaskItem(abstractItem);
             return;
         }
     }
-    TaskButton* button = new TaskButton(taskItem, this);
+    TaskButton* button = new TaskButton(abstractItem, this);
     m_layout->addItem(button);
 }
 
 
-void Superbar::taskGroupRemoved(AbstractGroupableItem* taskItem)
+void Superbar::taskGroupRemoved(AbstractGroupableItem* abstractItem)
 {
-    for (int i=0; i<m_layout->count(); ++i)
-    {
+    for (int i=0; i<m_layout->count(); ++i) {
         TaskButton* button = static_cast<TaskButton*>(m_layout->itemAt(i));
-        if (button->matches(taskItem)) {
+        if (button->matches(abstractItem)) {
             if (button->hasLauncher())
                 button->resetTaskItem();
             else {
@@ -92,7 +90,7 @@ void Superbar::taskGroupRemoved(AbstractGroupableItem* taskItem)
             return;
         }
     }
-    qWarning("taskGroupRemoved: trying to remove non-existant task: %s", qPrintable(taskItem->name()));
+    qWarning("taskGroupRemoved: trying to remove non-existant task: %s", qPrintable(abstractItem->name()));
 }
 
 

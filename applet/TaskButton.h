@@ -21,10 +21,10 @@ public:
 
     void setTaskItem(AbstractGroupableItem* taskItem);
     void resetTaskItem();
-    bool hasTask() { return m_taskItem; }
+    bool hasTask() { return m_abstractItem; }
     bool hasLauncher() { return !m_url.isEmpty(); }
 
-    bool matches(AbstractGroupableItem* taskItem);
+    bool matches(AbstractGroupableItem* abstractItem);
 
 private:
     void init();
@@ -37,7 +37,7 @@ private:
     /*override*/ QSizeF sizeHint(Qt::SizeHint which, const QSizeF& constraint) const;
     
     KUrl m_url;
-    AbstractGroupableItem* m_taskItem;
+    AbstractGroupableItem* m_abstractItem;
 
     QList<QString> m_keys;
     KIcon m_icon;

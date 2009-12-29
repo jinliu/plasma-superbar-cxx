@@ -21,7 +21,7 @@ using namespace std;
 TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
     : QGraphicsWidget(parent),
       m_url(url),
-      m_taskItem(NULL)
+      m_abstractItem(NULL)
 {
     KDesktopFile desktopFile(url.toLocalFile());
     KConfigGroup config = desktopFile.desktopGroup();
@@ -54,10 +54,10 @@ TaskButton::TaskButton(KUrl url, QGraphicsItem* parent)
 }
 
 
-TaskButton::TaskButton(AbstractGroupableItem* taskItem, QGraphicsItem* parent)
+TaskButton::TaskButton(AbstractGroupableItem* abstractItem, QGraphicsItem* parent)
     : QGraphicsWidget(parent),
-      m_taskItem(taskItem),
-      m_icon(taskItem->icon())
+      m_abstractItem(abstractItem),
+      m_icon(abstractItem->icon())
 {
     init();
 }
@@ -74,30 +74,34 @@ void TaskButton::init()
 }
 
 
-void TaskButton::setTaskItem(AbstractGroupableItem* taskItem)
+void TaskButton::setTaskItem(AbstractGroupableItem* abstractItem)
 {
-    m_taskItem = taskItem;
+    m_abstractItem = abstractItem;
     update();
 }
 
 
 void TaskButton::resetTaskItem()
 {
-    m_taskItem = NULL;
+    m_abstractItem = NULL;
     update();
 }
 
 
-bool TaskButton::matches(AbstractGroupableItem* taskItem)
+bool TaskButton::matches(AbstractGroupableItem* abstractItem)
 {
-    if (m_taskItem)
-        return m_taskItem == taskItem;
-    TaskItem* t;
-    if (taskItem->isGroupItem())
-        t = static_cast<TaskItem*>(static_cast<TaskGroup*>(taskItem)->members().first());
-    else
-        t = static_cast<TaskItem*>(taskItem);
-    TaskPtr task = t->task();
+    if (m_abstractItem)
+        return m_abstractItem == abstractItem;
+    TaskItem* taskItem = NULL;
+    if (abstractItem->isGroupItem()) {
+        TaskGroup* group = qobject_cast<TaskGroup*>(abstractItem);
+        if (group)
+            taskItem = qobject_cast<TaskItem*>(group->members().first());
+    } else
+        taskItem = qobject_cast<TaskItem*>(abstractItem);
+    if (!taskItem)
+        return false;
+    TaskPtr task = taskItem->task();
     if (!task)
         return false;
     QString windowClass = task->classClass().toLower();
@@ -136,8 +140,7 @@ void TaskButton::paint(QPainter *painter,
     painter->setRenderHint(QPainter::Antialiasing);
     painter->setRenderHint(QPainter::SmoothPixmapTransform);
 
-    if (m_taskItem)
-    {
+    if (m_abstractItem) {
         m_background->resizeFrame(bounds.size());
         m_background->paintFrame(painter);
     }
@@ -159,13 +162,14 @@ void TaskButton::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
 {
     switch (event->button()) {
     case Qt::LeftButton:
-        if (m_taskItem) // task mode
-        {
-            if (!m_taskItem->isGroupItem()) {
-                TaskManager::TaskItem* t = static_cast<TaskManager::TaskItem*>(m_taskItem);
-                TaskPtr task = t->task();
-                if (task)
-                    task->activateRaiseOrIconify();
+        if (m_abstractItem) { // task mode
+            if (!m_abstractItem->isGroupItem()) {
+                TaskItem* t = qobject_cast<TaskItem*>(m_abstractItem);
+                if (t) {
+                    TaskPtr task = t->task();
+                    if (task)
+                        task->activateRaiseOrIconify();
+                }
             }
         } else // launcher mode
             new KRun(m_url, NULL);
