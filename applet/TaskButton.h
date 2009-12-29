@@ -28,6 +28,7 @@ public:
 
 private:
     void init();
+    QSizeF buttonSize(qreal iconSize) const;
     /*override*/ void paint(QPainter *painter,
                             const QStyleOptionGraphicsItem *option,
                             QWidget *widget);
@@ -41,6 +42,7 @@ private:
     QList<QString> m_keys;
     KIcon m_icon;
     Plasma::FrameSvg* m_background;
+    qreal m_leftMargin, m_topMargin, m_rightMargin, m_bottomMargin;
 };
 
 #endif //SUPERBAR_TASK_BUTTON_H

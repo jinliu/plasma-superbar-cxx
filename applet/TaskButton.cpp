@@ -70,6 +70,7 @@ void TaskButton::init()
     m_background = new Plasma::FrameSvg(this);
     m_background->setImagePath("widgets/tasks");
     m_background->setElementPrefix("normal");
+    m_background->getMargins(m_leftMargin, m_topMargin, m_rightMargin, m_bottomMargin);
 }
 
 
@@ -110,13 +111,18 @@ bool TaskButton::matches(AbstractGroupableItem* taskItem)
 QSizeF TaskButton::sizeHint(Qt::SizeHint which, const QSizeF& constraint) const
 {
     if (which == Qt::PreferredSize)
-        return QSizeF(KIconLoader::SizeLarge, KIconLoader::SizeLarge);
+        return buttonSize(KIconLoader::SizeLarge);
     else if (which == Qt::MinimumSize)
-        return QSizeF(KIconLoader::SizeSmall, KIconLoader::SizeSmall);
+        return buttonSize(KIconLoader::SizeSmall);
     else
         return QGraphicsWidget::sizeHint(which, constraint);
 }
 
+QSizeF TaskButton::buttonSize(qreal iconSize) const
+{
+    return QSizeF(iconSize+m_leftMargin+m_rightMargin,
+                  iconSize+m_topMargin+m_bottomMargin);
+}
 
 void TaskButton::paint(QPainter *painter,
                        const QStyleOptionGraphicsItem *option,
@@ -135,12 +141,18 @@ void TaskButton::paint(QPainter *painter,
         m_background->resizeFrame(bounds.size());
         m_background->paintFrame(painter);
     }
-    m_icon.paint(painter, bounds.toRect());
+    
+    m_icon.paint(painter,
+                 bounds.adjusted(m_leftMargin, m_topMargin,
+                                 -m_rightMargin, -m_bottomMargin
+                     ).toRect());
 }
 
 
 void TaskButton::mousePressEvent(QGraphicsSceneMouseEvent* event)
-{}
+{
+    Q_UNUSED(event);
+}
 
 
 void TaskButton::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
