@@ -140,9 +140,7 @@ void TaskButton::paint(QPainter *painter,
 
 
 void TaskButton::mousePressEvent(QGraphicsSceneMouseEvent* event)
-{
-    event->accept();
-}
+{}
 
 
 void TaskButton::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
