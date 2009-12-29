@@ -69,7 +69,7 @@ void TaskButton::init()
 
     m_background = new Plasma::FrameSvg(this);
     m_background->setImagePath("widgets/tasks");
-    m_background->setElementPrefix("focus");
+    m_background->setElementPrefix("normal");
 }
 
 
