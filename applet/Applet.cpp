@@ -16,7 +16,7 @@ Superbar::Superbar(QObject *parent, const QVariantList &args)
     m_groupManager(new TaskManager::GroupManager(this))
 {
     m_groupManager->setGroupingStrategy(TaskManager::GroupManager::ProgramGrouping);
-    m_groupManager->setSortingStrategy(TaskManager::GroupManager::AlphaSorting);
+    m_groupManager->setSortingStrategy(TaskManager::GroupManager::NoSorting);
 
     setHasConfigurationInterface(false);
     setAspectRatioMode(Plasma::IgnoreAspectRatio);
@@ -96,12 +96,5 @@ void Superbar::taskGroupRemoved(AbstractGroupableItem* taskItem)
 void Superbar::taskGroupPositionChanged(AbstractGroupableItem*)
 {}
 
-
-void Superbar::resizeEvent(QGraphicsSceneResizeEvent* event)
-{
-    Plasma::Applet::resizeEvent(event);
-    m_layout->invalidate();
-    m_layout->activate();
-}
 
 #include "Applet.moc"

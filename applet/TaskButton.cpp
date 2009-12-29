@@ -2,12 +2,12 @@
 
 #include <KConfigGroup>
 #include <KDesktopFile>
+#include <KIconLoader>
 #include <KRun>
 #include <taskmanager/task.h>
 #include <taskmanager/taskitem.h>
 #include <taskmanager/taskgroup.h>
 
-#include <QGraphicsLayout>
 #include <QGraphicsSceneMouseEvent>
 
 #include <limits>
@@ -109,25 +109,12 @@ bool TaskButton::matches(AbstractGroupableItem* taskItem)
 
 QSizeF TaskButton::sizeHint(Qt::SizeHint which, const QSizeF& constraint) const
 {
-    Q_UNUSED(constraint);
-
-    switch (which) {
-    case Qt::MinimumSize:
-        return QSizeF(0.0, 0.0);
-    case Qt::PreferredSize:
-    {
-        QRectF r = parentWidget()->layout()->contentsRect();
-        if (r.height()<=0)
-            return QSizeF();
-        return QSizeF(r.height(), r.height());
-    }
-    case Qt::MaximumSize:
-        return QSizeF(std::numeric_limits<qreal>::max(), std::numeric_limits<qreal>::max());
-    case Qt::MinimumDescent:
-        return QSizeF(0.0, 0.0);
-    default:
-        return QSizeF();
-    }
+    if (which == Qt::PreferredSize)
+        return QSizeF(KIconLoader::SizeLarge, KIconLoader::SizeLarge);
+    else if (which == Qt::MinimumSize)
+        return QSizeF(KIconLoader::SizeSmall, KIconLoader::SizeSmall);
+    else
+        return QGraphicsWidget::sizeHint(which, constraint);
 }
 
 

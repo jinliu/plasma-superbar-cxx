@@ -21,9 +21,7 @@ private slots:
     void taskGroupRemoved(AbstractGroupableItem*);
     void taskGroupPositionChanged(AbstractGroupableItem*);
 
-private:
-    void resizeEvent(QGraphicsSceneResizeEvent* event);
-    
+private:    
     QGraphicsLinearLayout* m_layout;
     TaskManager::GroupManager* m_groupManager;
 };
