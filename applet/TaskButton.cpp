@@ -94,6 +94,9 @@ bool TaskButton::tryAddTaskItem(AbstractGroupableItem* item, QString windowClass
     foreach (QString key, m_keys)
         if (windowClass == key) {
             m_tasks.push_back(item);
+            connect(
+                item, SIGNAL(changed(::TaskManager::TaskChanges)),
+                this, SLOT(updateTask(::TaskManager::TaskChanges)));
             if (m_tasks.size() == 1) {
                 m_parentGroup = item->parentGroup();
                 if (m_parentGroup)
@@ -123,6 +126,16 @@ bool TaskButton::tryRemoveTaskItem(AbstractGroupableItem* item)
             delete this;
     }
     return true;
+}
+
+
+void TaskButton::updateTask(TaskChanges changes)
+{
+    if (changes & IconChanged && !hasLauncher()) {
+        //TODO: use a Task class to receive this signal.
+        m_icon = KIcon(m_tasks.front()->icon());
+        update();
+    }
 }
 
 

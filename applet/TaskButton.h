@@ -27,6 +27,9 @@ public:
 public slots:    
     bool tryRemoveTaskItem(AbstractGroupableItem* item);
 
+private slots:
+    void updateTask(::TaskManager::TaskChanges changes);
+    
 private:
     void init();
     QSizeF buttonSize(qreal iconSize) const;
