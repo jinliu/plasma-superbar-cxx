@@ -4,10 +4,13 @@
 #include <KDesktopFile>
 #include <KIconLoader>
 #include <KRun>
+#include <KDebug>
 #include <taskmanager/task.h>
 #include <taskmanager/taskitem.h>
 
+#include <QGraphicsScene>
 #include <QGraphicsSceneMouseEvent>
+#include <QGraphicsView>
 #include <QPainter>
 
 using namespace TaskManager;
@@ -72,6 +75,51 @@ void TaskButton::init()
 }
 
 
+void TaskButton::setGeometry(const QRectF& geometry)
+{
+    QGraphicsWidget::setGeometry(geometry);
+    foreach (AbstractGroupableItem* item, m_tasks)
+        publishIconGeometry(item);
+}
+
+
+void TaskButton::publishIconGeometry(AbstractGroupableItem* item)
+{
+    if (!scene() || !boundingRect().isValid())
+        return;
+    QGraphicsView *parentView = 0;
+    QGraphicsView *possibleParentView = 0;
+    foreach (QGraphicsView* view, scene()->views()) {
+        if (view->sceneRect().intersects(sceneBoundingRect()) ||
+            view->sceneRect().contains(scenePos())) {
+            if (view->isActiveWindow()) {
+                parentView = view;
+                break;
+            } else
+                possibleParentView = view;
+        }
+    }
+        
+    if (!parentView) {
+        parentView = possibleParentView;
+        if (!parentView)
+            return;
+    }
+        
+    QRect r = parentView->mapFromScene(mapToScene(boundingRect())).boundingRect();
+    r.moveTopLeft(parentView->mapToGlobal(r.topLeft()));
+    
+    TaskItem* taskItem = qobject_cast<TaskItem*>(item);
+    if (taskItem)
+        taskItem->task()->publishIconGeometry(r);
+    else {
+        TaskGroup* group = qobject_cast<TaskGroup*>(item);
+        foreach (AbstractGroupableItem* i, group->members())
+            publishIconGeometry(i);
+    }
+}
+
+
 bool TaskButton::hasTask()
 {
     return !m_tasks.empty();
@@ -106,6 +154,7 @@ bool TaskButton::tryAddTaskItem(AbstractGroupableItem* item, QString windowClass
                     qWarning("TaskButton::tryAddTaskItem: no parentGroup: %s", qPrintable(windowClass));
                 update();
             }
+            publishIconGeometry(item);
             return true;
         }
     return false;

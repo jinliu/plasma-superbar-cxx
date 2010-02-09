@@ -23,7 +23,8 @@ public:
     bool hasLauncher();
 
     bool tryAddTaskItem(AbstractGroupableItem* item, QString windowClass);
-    
+
+    /*override*/ void setGeometry(const QRectF& geometry);
 public slots:    
     bool tryRemoveTaskItem(AbstractGroupableItem* item);
 
@@ -32,6 +33,7 @@ private slots:
     
 private:
     void init();
+    void publishIconGeometry(AbstractGroupableItem* item);
     QSizeF buttonSize(qreal iconSize) const;
     /*override*/ void mousePressEvent(QGraphicsSceneMouseEvent *event);
     /*override*/ void mouseReleaseEvent(QGraphicsSceneMouseEvent *event);
